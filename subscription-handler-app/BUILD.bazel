@@ -1,0 +1,56 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "my_tar",
+    srcs = [":subscription-handler-app"],
+)
+
+oci_image(
+    name = "my_image",
+    base = "@distroless_base",
+    cmd = ["/bin/sh"],
+    entrypoint = ["/subscription-handler-app"],
+    tars = [":my_tar"],
+)
+
+oci_push(
+    name = "my_image_push",
+    image = ":my_image",
+    remote_tags = ["c8"],
+    repository = "srinidhi25/sub-handler",
+)
+
+go_library(
+    name = "subscription-handler-app_lib",
+    srcs = ["main.go"],
+    importpath = "vertica.com/vaas/OCP/subscription-handler-app",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//OCP/subscription-handler-app/subscription_helper",
+        "//logging",
+        "@com_github_gin_gonic_gin//:gin",
+        "@com_github_go_playground_validator//:validator",
+        "@com_github_golang_jwt_jwt_v4//:jwt",
+    ],
+)
+
+go_binary(
+    name = "subscription-handler-app",
+    embed = [":subscription-handler-app_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "subscription-handler-app_test",
+    srcs = ["main_test.go"],
+    embed = [":subscription-handler-app_lib"],
+    deps = [
+        "//OCP/subscription-handler-app/subscription_helper",
+        "@com_github_dgrijalva_jwt_go//:jwt-go",
+        "@com_github_gin_gonic_gin//:gin",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//mock",
+    ],
+)

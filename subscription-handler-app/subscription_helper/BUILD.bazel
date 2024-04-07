@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "subscription_helper",
+    srcs = [
+        "events.go",
+        "sns_topic_helper.go",
+    ],
+    importpath = "vertica.com/vaas/OCP/subscription-handler-app/subscription_helper",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_aws_aws_sdk_go_v2//aws",
+        "@com_github_aws_aws_sdk_go_v2_config//:config",
+        "@com_github_aws_aws_sdk_go_v2_credentials//:credentials",
+        "@com_github_aws_aws_sdk_go_v2_service_sns//:sns",
+        "@com_github_aws_aws_sdk_go_v2_service_sts//:sts",
+        "@org_golang_google_api//idtoken",
+        "@org_golang_google_api//option",
+        "@org_golang_x_oauth2//google",
+    ],
+)
+
+go_test(
+    name = "subscription_helper_test",
+    srcs = ["events_test.go"],
+    embed = [":subscription_helper"],
+    deps = ["@com_github_stretchr_testify//assert"],
+)
